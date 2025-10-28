@@ -8,6 +8,7 @@ Features:
   Check Specific Email: Analyze individual emails in detail
 
   Quick Security Audit: Scan recent emails for immediate threat assessment
+  
 
 
 How It Works
