@@ -1,5 +1,5 @@
 Final Project for CIS 1051 Fall 2025:
-Email Security Analyzer
+Email  Analyzer
 
 A Python command-line tool that connects to your email inbox to detect and analyze potential phishing threats. The application provides three specialized modes for comprehensive email security analysis.
 Features
