@@ -7,7 +7,7 @@ Features:
 
   Check Specific Email: Analyze individual emails in detail
 
-  Quick Security Audit: Scan recent emails for immediate threat assessment
+  Builk Analysis: Scan recent emails (last 7 days) for potential phishing emails
   
 
 
