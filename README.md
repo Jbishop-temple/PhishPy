@@ -11,6 +11,5 @@ Features:
   
 
 
-How It Works
 
 The tool uses  pattern matching to identify common phishing indicators like suspicious sender addresses, urgency tactics, and malicious links. Users can opt for AI analysis for deeper email content examination.
