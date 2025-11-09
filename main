@@ -1,1 +1,18 @@
 
+# from imap_tools import MailBox
+username = "alien100005@outlook.com"
+password = "vlafsjwopmvadpfi"
+# with MailBox('imap.fastmail.com', port=993).login(username, password) as mailbox:
+#     mailbox.folder.set("Inbox")
+#     for email in mailbox.fetch():
+#         print(email)
+# print("connected")
+
+
+
+import imaplib
+
+ImapPort = 993
+
+mail = imaplib.IMAP4_SSL("outlook.office365.com", ImapPort)
+mail.login(username, password)
