@@ -2,12 +2,13 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from pathlib import Path
 imap_address = "https://mail.google.com/"
 
-client_secret = open("C:\Users\Jay\Documents\Python Projects\PhishPy\Files", 'r')
+client_secret = r"C:\Users\Jay\Documents\Python Projects\PhishPy\Files\client_secret.json"
 
 flow = InstalledAppFlow.from_client_secrets_file(
     client_secret,
-    scopes=['emaill', imap_address]
+    scopes=['email', imap_address]
 )
+creds = flow.run_local_server(port=55555)
 
 # # from imap_tools import MailBox
 # username = "alien100005@outlook.com"
