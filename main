@@ -1,5 +1,7 @@
 from google_auth_oauthlib.flow import InstalledAppFlow
 from pathlib import Path
+#email_address = input("Whats your email?")
+user_search = input("Email Name")
 imap_address = "https://www.googleapis.com/auth/userinfo.email https://mail.google.com/"
 
 client_secret = r"C:\Users\Jay\Documents\Python Projects\PhishPy\Files\client_secret.json"
@@ -11,12 +13,13 @@ flow = InstalledAppFlow.from_client_secrets_file(
     'https://mail.google.com/']
 )
 creds = flow.run_local_server(port=55555)
-print(creds.refresh_token)
+Oauth_refresh_token = (creds.token)
 
+from imap_tools import MailBox, AND
 
-# import imaplib
-
-# ImapPort = 993
-
-# mail = imaplib.IMAP4_SSL("outlook.office365.com", ImapPort)
-# mail.login(username, password)
+with MailBox('imap.gmail.com').xoauth2('jahzeelbishop03@gmail.com', Oauth_refresh_token, 'INBOX') as mailbox:
+    for msg in mailbox.fetch(AND(subject=user_search)):
+        header = msg.headers
+        print(header.keys())
+        break
+        
