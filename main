@@ -17,7 +17,7 @@ Oauth_refresh_token = (creds.token)
 
 from imap_tools import MailBox, AND
 
-with MailBox('imap.gmail.com').xoauth2('jahzeelbishop03@gmail.com', Oauth_refresh_token, 'INBOX') as mailbox:
+with MailBox('imap.gmail.com').xoauth2(user_search, Oauth_refresh_token, 'INBOX') as mailbox:
     for msg in mailbox.fetch(AND(subject=user_search)):
         header = msg.headers
         print(header.keys())
