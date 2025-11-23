@@ -1,18 +1,28 @@
+from google_auth_oauthlib.flow import InstalledAppFlow
+from pathlib import Path
+imap_address = "https://mail.google.com/"
 
-# from imap_tools import MailBox
-username = "alien100005@outlook.com"
-password = "vlafsjwopmvadpfi"
-# with MailBox('imap.fastmail.com', port=993).login(username, password) as mailbox:
-#     mailbox.folder.set("Inbox")
-#     for email in mailbox.fetch():
-#         print(email)
-# print("connected")
+client_secret = open("C:\Users\Jay\Documents\Python Projects\PhishPy\Files", 'r')
+
+flow = InstalledAppFlow.from_client_secrets_file(
+    client_secret,
+    scopes=['emaill', imap_address]
+)
+
+# # from imap_tools import MailBox
+# username = "alien100005@outlook.com"
+# password = "vlafsjwopmvadpfi"
+# # with MailBox('imap.fastmail.com', port=993).login(username, password) as mailbox:
+# #     mailbox.folder.set("Inbox")
+# #     for email in mailbox.fetch():
+# #         print(email)
+# # print("connected")
 
 
 
-import imaplib
+# import imaplib
 
-ImapPort = 993
+# ImapPort = 993
 
-mail = imaplib.IMAP4_SSL("outlook.office365.com", ImapPort)
-mail.login(username, password)
+# mail = imaplib.IMAP4_SSL("outlook.office365.com", ImapPort)
+# mail.login(username, password)
