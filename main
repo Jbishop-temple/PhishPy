@@ -1,7 +1,9 @@
 from google_auth_oauthlib.flow import InstalledAppFlow
 from pathlib import Path
+import requests
 #email_address = input("Whats your email?")
-user_search = input("Email Name")
+#search_type = input("Search from subject or from sender: ")
+user_search = input("Email Name: ")
 imap_address = "https://www.googleapis.com/auth/userinfo.email https://mail.google.com/"
 
 client_secret = r"C:\Users\Jay\Documents\Python Projects\PhishPy\Files\client_secret.json"
@@ -17,9 +19,17 @@ Oauth_refresh_token = (creds.token)
 
 from imap_tools import MailBox, AND
 
-with MailBox('imap.gmail.com').xoauth2(user_search, Oauth_refresh_token, 'INBOX') as mailbox:
+with MailBox('imap.gmail.com').xoauth2('jahzeelbishop03@gmail.com', Oauth_refresh_token, 'INBOX') as mailbox:
     for msg in mailbox.fetch(AND(subject=user_search)):
-        header = msg.headers
-        print(header.keys())
-        break
+        print("From:", msg.from_)
+        print("Subject:", msg.subject)
+        confirm = input("Is this the correct email? (y/n): ").strip().lower()
+        if confirm == 'y':
+            body = msg.text
+            print("Email confirmed. Processing...")
+            
+        else:
+            print("Skipping this email...")
+
         
+
