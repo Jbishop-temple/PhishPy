@@ -3,7 +3,91 @@ from pathlib import Path
 import requests
 #email_address = input("Whats your email?")
 #search_type = input("Search from subject or from sender: ")
-user_search = input("Email Name: ")
+running = True
+def AI_Phishing_Calculation(body, sender, header):
+        
+    API_KEY = "sk-cf23a9c220924bea8df33d8322f85595"  
+    EMAIL_TEXT = body
+    email_sender = str(sender)
+    email_header = str(header)
+
+    response = requests.post(
+        "https://api.deepseek.com/v1/chat/completions",
+        headers={
+            "Authorization": "Bearer " + API_KEY,
+            "Content-Type": "application/json"
+        },
+        json={
+            "model": "deepseek-chat", 
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You are a highly specialized and accurate AI security analyst whose sole function is to detect phishing emails"
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        "Determine whether the following email is a phishing email. Be careful not to flag generic advertisement or billing/payments as Scam. Be Careful with Ads/advertisements they are not phishing. Striuclty follow this output 'true/false whehther email is a phishing email. true output looks like True, email is a phishing email because xyz. False output looks like False, email is not a phishing email because of x,y,z  "
+                        "and explain why in 1 sentence:\n\n"
+                        "Email Body: " + EMAIL_TEXT + "\n\n"
+                        "Sender: " + email_sender + "\n\n"
+                        "Headers: " + email_header
+                    )
+                }
+            ]
+        }
+    )
+    output = response.json()
+    llm_response = output['choices'][0]['message']['content']
+    print(llm_response)
+def AI_Phishing_Calculation2(body, subject_list, email_uid):
+        
+    API_KEY = "sk-cf23a9c220924bea8df33d8322f85595"  
+    EMAIL_TEXT = body
+
+
+    counter = 0
+    for text in EMAIL_TEXT:
+        response = requests.post(
+            "https://api.deepseek.com/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "deepseek-chat", 
+                "messages": [
+                    {
+                    "role": "user",
+                    "content": (
+                        "Determine whether the following email is a phishing email. Be careful not to flag generic advertisement or billing/payments as Scam. Be Careful with Ads/advertisements they are not phishing. Striuclty follow this output 'true/false whehther email is a phishing email. true output looks like True, email is a phishing email because xyz. False output looks like False, email is not a phishing email because of x,y,z  "
+                        "and explain why in 1 sentence:\n\n"
+                        "Email Body: " + text + "\n\n"
+                        )
+                    }
+                ]
+            }
+        )
+
+        output = response.json()
+        llm_response = output['choices'][0]['message']['content']
+        print("Subject: " + subject_list[counter] + "\n" + llm_response,end="\n\n")
+        if llm_response[0:4] == "True":
+           delete = input("Would you like to delete email: y/n")
+           if delete == 'n':
+               continue
+           elif delete == 'y':
+                delete_email(email_uid[counter])
+           else:
+               print("try again")
+        counter += 1
+        email_uid = NotImplemented
+ 
+def delete_email(email_uid):
+    mailbox.delete(email_uid)
+    mailbox.expunge
+
+
 imap_address = "https://www.googleapis.com/auth/userinfo.email https://mail.google.com/"
 
 client_secret = r"C:\Users\Jay\Documents\Python Projects\PhishPy\Files\client_secret.json"
@@ -17,19 +101,69 @@ flow = InstalledAppFlow.from_client_secrets_file(
 creds = flow.run_local_server(port=55555)
 Oauth_refresh_token = (creds.token)
 
-from imap_tools import MailBox, AND
+from imap_tools import MailBox, AND, A
+while running == True:
+    Run_Program = input("Would you like to run PhishPY: y/n  ")
+    if Run_Program == 'n':
+        break
+    elif Run_Program != 'y':
+        print("Try again")
+    else:
+        Run_Program = input("Would you like to scan 1 email? Press(1): \nWould you like to Bulk Scan? Press (2): ")
+        if Run_Program == '1':
+            Email_Found = False
+            user_search = input("Email Name: ")
+            with MailBox('imap.gmail.com').xoauth2('jahzeelbishop03@gmail.com', Oauth_refresh_token, 'INBOX') as mailbox:
+                search_count = 0
+                email_uid = []
+                for msg in mailbox.fetch(AND(subject=user_search)):
+                    Email_Found = True
+                    print("From:", msg.from_)
+                    print("Subject:", msg.subject)
+                    confirm = input("Is this the correct email? (y/n): ").strip().lower()
+                    if confirm == 'y':
+                        body = msg.text
+                        sender = msg.from_
+                        header = msg.headers
+                        print("Email confirmed! \nDetermining whether Phishing Email...")
+                        AI_Phishing_Calculation(body, sender, header)
+                        delete = input("Would you like to delete email? y/n")
+                        if delete == 'n':
+                            continue      
+                        if delete == 'y':
+                            email_uid.append(msg.uid)
+                            delete_email(email_uid)
+                        else:
+                            print("try again")
 
-with MailBox('imap.gmail.com').xoauth2('jahzeelbishop03@gmail.com', Oauth_refresh_token, 'INBOX') as mailbox:
-    for msg in mailbox.fetch(AND(subject=user_search)):
-        print("From:", msg.from_)
-        print("Subject:", msg.subject)
-        confirm = input("Is this the correct email? (y/n): ").strip().lower()
-        if confirm == 'y':
-            body = msg.text
-            print("Email confirmed. Processing...")
-            
+                        
+                        break
+                    elif search_count == 5:
+                        search_again = input("Would you like to search again? (y/n): ").strip().lower()
+                        if search_again == 'n':
+                            continue      
+                        if search_again == 'y':
+                            break      
+                        
+                    else:
+                        print("Skipping this email...")
+                        search_count += 1
+                if Email_Found == False:
+                    print("Serach Not Found")
+                    search_again = input("Would you like to search again? (y/n): ").strip().lower()
+                    if search_again == 'n':
+                        break             
+        elif Run_Program == '2':
+            with MailBox('imap.gmail.com').xoauth2('jahzeelbishop03@gmail.com', Oauth_refresh_token, 'INBOX') as mailbox:
+                email_text_list = {}
+                email_uid = []
+                for msg in mailbox.fetch(reverse=True, limit=10):
+                    print("Subject:", msg.subject + "\nAdding to analysis")
+                    email_text_list[msg.subject] = (msg.text)
+                    email_uid.append(msg.uid)
+                subject_list = list(email_text_list.keys())
+                email_text_list = list(email_text_list.values())
+                AI_Phishing_Calculation2(email_text_list,subject_list, email_uid)
         else:
-            print("Skipping this email...")
-
-        
-
+            print("Try again")
+            
