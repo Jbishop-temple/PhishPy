@@ -1,8 +1,14 @@
 from google_auth_oauthlib.flow import InstalledAppFlow
 from pathlib import Path
 import requests
+from rich.console import Console
+from rich.table import Table
+from rich.prompt import Prompt
+from rich import print
+from time import sleep
 #email_address = input("Whats your email?")
 #search_type = input("Search from subject or from sender: ")
+
 running = True
 def AI_Phishing_Calculation(body, sender, header):
         
@@ -39,14 +45,18 @@ def AI_Phishing_Calculation(body, sender, header):
     )
     output = response.json()
     llm_response = output['choices'][0]['message']['content']
-    print(llm_response)
-def AI_Phishing_Calculation2(body, subject_list, email_uid):
+    print("\n")
+    console.print(f"{llm_response[0:6]}[bold green]{llm_response[6::]}[/bold green]")
+def AI_Phishing_Calculation2(body):
         
     API_KEY = "sk-cf23a9c220924bea8df33d8322f85595"  
     EMAIL_TEXT = body
+    phishing_results = []
+    delete_list = []
 
 
     counter = 0
+    
     for text in EMAIL_TEXT:
         response = requests.post(
             "https://api.deepseek.com/v1/chat/completions",
@@ -69,19 +79,14 @@ def AI_Phishing_Calculation2(body, subject_list, email_uid):
             }
         )
 
-        output = response.json()
+        output = response.json()    
         llm_response = output['choices'][0]['message']['content']
-        print("Subject: " + subject_list[counter] + "\n" + llm_response,end="\n\n")
         if llm_response[0:4] == "True":
-           delete = input("Would you like to delete email: y/n")
-           if delete == 'n':
-               continue
-           elif delete == 'y':
-                delete_email(email_uid[counter])
-           else:
-               print("try again")
+           phishing_results.append(llm_response + "\n\n")
+        else:
+            continue
         counter += 1
-        email_uid = NotImplemented
+    return(phishing_results)
  
 def delete_email(email_uid):
     mailbox.delete(email_uid)
@@ -103,67 +108,111 @@ Oauth_refresh_token = (creds.token)
 
 from imap_tools import MailBox, AND, A
 while running == True:
-    Run_Program = input("Would you like to run PhishPY: y/n  ")
+    console = Console()
+    Run_Program = Prompt.ask("[bold green]Would you like run PhishPY:[/bold green]", choices=["y", "n"], case_sensitive=False)
     if Run_Program == 'n':
         break
-    elif Run_Program != 'y':
-        print("Try again")
-    else:
-        Run_Program = input("Would you like to scan 1 email? Press(1): \nWould you like to Bulk Scan? Press (2): ")
-        if Run_Program == '1':
+    elif Run_Program == 'y':
+        option_choice = Prompt.ask("[bold green]Press[/bold green] [magenta](1)[/magenta] [bold green]to activate single scan or Press[/bold green] [magenta](2)[/magenta] [bold green]to activate Bulk Scan?:[/bold green]", choices=["1", "2"], case_sensitive=False)
+        if option_choice == '1':
             Email_Found = False
-            user_search = input("Email Name: ")
+            user_search = Prompt.ask("[green]Search:[/green] ")
             with MailBox('imap.gmail.com').xoauth2('jahzeelbishop03@gmail.com', Oauth_refresh_token, 'INBOX') as mailbox:
                 search_count = 0
                 email_uid = []
+                console.print("[bold green]Searching...[/bold green]")
                 for msg in mailbox.fetch(AND(subject=user_search)):
                     Email_Found = True
-                    print("From:", msg.from_)
-                    print("Subject:", msg.subject)
-                    confirm = input("Is this the correct email? (y/n): ").strip().lower()
+                    search_results = Table(title="[bold][yellow]Scan Results[/bold][/yellow]", border_style="green", header_style="magenta")
+                    search_results.add_column("Subject", style="bold grey70")
+                    search_results.add_column("From", style="bold grey70")
+                    search_results.add_column("Date", style="bold grey70")
+                    search_results.add_row(msg.subject, msg. from_, str(msg.date))
+                    console.print(search_results)  
+                    confirm = Prompt.ask("[bold green]Is this the correct email?[/bold green]", choices=["y", "n"], case_sensitive=False)
                     if confirm == 'y':
                         body = msg.text
                         sender = msg.from_
                         header = msg.headers
-                        print("Email confirmed! \nDetermining whether Phishing Email...")
-                        AI_Phishing_Calculation(body, sender, header)
-                        delete = input("Would you like to delete email? y/n")
+                        with console.status("[bold green]Determining whether Phishing Email[/bold green]", spinner="dots"):
+                            sleep(3)
+                            AI_Phishing_Calculation(body, sender, header)
+                        delete = Prompt.ask("[bold green]Would you like to delete email?[bold green]", choices=["y", "n"], case_sensitive=False)
                         if delete == 'n':
                             continue      
                         if delete == 'y':
                             email_uid.append(msg.uid)
                             delete_email(email_uid)
-                        else:
-                            print("try again")
-
-                        
-                        break
+                            console.print("[bold red] Deleted [/bold red]")
+                            break
                     elif search_count == 5:
-                        search_again = input("Would you like to search again? (y/n): ").strip().lower()
+                        search_again = Prompt.ask("Would you like to search again?", choices=["y", "n"], case_sensitive=False)
                         if search_again == 'n':
-                            continue      
+                            continue
                         if search_again == 'y':
-                            break      
+                            break  
                         
-                    else:
-                        print("Skipping this email...")
+                    elif confirm == 'n':
+                        print("[bold magenta]Skipping this email[bold magenta]")
                         search_count += 1
+                        continue
                 if Email_Found == False:
-                    print("Serach Not Found")
-                    search_again = input("Would you like to search again? (y/n): ").strip().lower()
+                    print("[red]Search Not Found[/red]")
+                    search_again = Prompt.ask("Would you like to search again?", choices=["y", "n"], case_sensitive=False)
                     if search_again == 'n':
-                        break             
-        elif Run_Program == '2':
+                        break  
+                    if search_again == 'y':
+                        continue      
+        elif option_choice == '2':
+            counter = 0
             with MailBox('imap.gmail.com').xoauth2('jahzeelbishop03@gmail.com', Oauth_refresh_token, 'INBOX') as mailbox:
                 email_text_list = {}
                 email_uid = []
+                msg_data = []
+                from_data = []
+                date_data = []
+                search_results = Table(title="[bold][yellow]Scan Results[/bold][/yellow]", border_style="green", header_style="magenta")
+                search_results.add_column("Subject", style="bold grey70")
+                search_results.add_column("From", style="bold grey70")
+                search_results.add_column("Date", style="bold grey70")
+                search_results.add_column("Phishing", style="bold grey70")
+                search_results.add_column("Number", style="bold grey70")
                 for msg in mailbox.fetch(reverse=True, limit=10):
-                    print("Subject:", msg.subject + "\nAdding to analysis")
+                    Email_Found = True
+                    msg_data.append(msg.subject)
+                    from_data.append(msg.from_)
+                    date_data.append(str(msg.date))
                     email_text_list[msg.subject] = (msg.text)
-                    email_uid.append(msg.uid)
+                    email_uid.append(msg.uid) 
+                    counter += 1
                 subject_list = list(email_text_list.keys())
                 email_text_list = list(email_text_list.values())
-                AI_Phishing_Calculation2(email_text_list,subject_list, email_uid)
-        else:
-            print("Try again")
-            
+                with console.status("[bold green]Analyzing Emails[/bold green]", spinner="dots"):
+                    sleep(3)
+                    results = AI_Phishing_Calculation2(email_text_list)
+                if len(results) == 0:
+                    console.print("[bold red] No Phishing Emails Found [/bold red]")
+                else:
+                    for message in range(len(results)):
+                        search_results.add_row(msg_data[message], from_data[message], date_data[message], results[message], str(message))
+                    console.print(search_results) 
+                    delete = Prompt.ask("Would you like to delete any emails: y/n", choices=["y", "n"], case_sensitive=False)
+                    if delete == 'n':
+                        continue
+                    elif delete == 'y':
+                            selection = Prompt.ask("which email 1-10", choices=["1", "2", "3", "4", "5", "6 ", "7", "8", "9", "10", "all"], case_sensitive=False)
+                            for i in range(len(email_uid)):
+                                if selection == "i":
+                                    delete_email(email_uid[i])
+                                    console.print("[bold red] Deleted [/bold red]")
+                                elif  selection == "all":
+                                    for em in range(0,10):
+                                        try:
+                                            delete_email(email_uid[em])
+                                        except:
+                                            continue
+                            console.print("[bold red] Deleted All[/bold red]")
+
+
+
+
