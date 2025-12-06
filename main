@@ -4,12 +4,27 @@ import requests
 from rich.console import Console
 from rich.table import Table
 from rich.prompt import Prompt
+from rich.panel import Panel
+from rich.align import Align
 from rich import print
 from time import sleep
-#email_address = input("Whats your email?")
-#search_type = input("Search from subject or from sender: ")
+import re
+def display_logo():
+    console = Console()
+    logo = """
+    ██████╗ ██╗  ██╗██╗███████╗██╗  ██╗██████╗ ██╗   ██╗
+    ██╔══██╗██║  ██║██║██╔════╝██║  ██║██╔══██╗╚██╗ ██╔╝
+    ██████╔╝███████║██║███████╗███████║██████╔╝ ╚████╔╝ 
+    ██╔═══╝ ██╔══██║██║╚════██║██╔══██║██╔═══╝   ╚██╔╝  
+    ██║     ██║  ██║██║███████║██║  ██║██║        ██║   
+    ╚═╝     ╚═╝  ╚═╝╚═╝╚══════╝╚═╝  ╚═╝╚═╝        ╚═╝   
+    
+    [bold magenta]AI Phishing/Scam Email Detector v1.0 built by Jay (Jbishop-temple)[/bold magenta]
+    [bold red]Currently Only Compatible with Gmail Adresses. Warning All Scans All Put Your Data/Email Through Deepseeks LLM[/bold red]
+    """
+    console.print(Panel(Align.center(logo), border_style="green"))
+    console.print()
 
-running = True
 def AI_Phishing_Calculation(body, sender, header):
         
     API_KEY = "sk-cf23a9c220924bea8df33d8322f85595"  
@@ -33,12 +48,10 @@ def AI_Phishing_Calculation(body, sender, header):
                 {
                     "role": "user",
                     "content": (
-                        "Determine whether the following email is a phishing email. Be careful not to flag generic advertisement or billing/payments as Scam. Be Careful with Ads/advertisements they are not phishing. Striuclty follow this output 'true/false whehther email is a phishing email. true output looks like True, email is a phishing email because xyz. False output looks like False, email is not a phishing email because of x,y,z  "
+                        "You are an expert Cybersecurity Analyst and Email Security Filter. Your task is to analyze the provided Sender Information and Email Body to detect Phishing, Scams, or Impersonation attempts.  Sender: " + email_sender + " Email Body: " + EMAIL_TEXT + " + Email Header Info: " + email_header + " ANALYSIS RULES: 1. Sender Verification (Crucial): Compare the Sender's email address against the entity they claim to be in the body. If the email claims to be from a major company (e.g., Amazon, PayPal, Microsoft) but comes from a generic domain (e.g., @gmail.com) or a misspelled domain (e.g., @paypa1.com), flag it as True (Phishing). 2. Content Patterns: Look for high-pressure tactics, threats of account suspension, urgency, requests for sensitive data/passwords, or \"too good to be true\" offers. 3. False Positive Prevention (Strict): - Advertisements: Do not flag generic marketing, newsletters, or sales announcements as phishing unless they contain malicious impersonation. - Billing/Receipts: Do not flag legitimate automated transaction receipts. Only flag them if the sender address does not match the vendor. OUTPUT FORMAT: You must output the result strictly in the following bracketed format. Do not provide a preamble. - If Phishing/Scam: [True, reason based on sender or content] - If Safe/Ad/Legit: [False, reason why it appears legitimate] EXAMPLES: Input: Sender: support@gmaill.com, Body: \"Your Bank of America account is locked.\" Output: [True, the email claims to be Bank of America but the sender domain is 'gmaill.com' which is a spoofed domain.] Input: Sender: newsletter@marketing.nike.com, Body: \"Check out our summer sale!\" Output: [False, this is a generic advertisement and the sender domain appears legitimate.] Based on the rules above, analyze the Input Data provided."
                         "and explain why in 1 sentence:\n\n"
-                        "Email Body: " + EMAIL_TEXT + "\n\n"
-                        "Sender: " + email_sender + "\n\n"
-                        "Headers: " + email_header
-                    )
+                        )
+                    
                 }
             ]
         }
@@ -47,12 +60,12 @@ def AI_Phishing_Calculation(body, sender, header):
     llm_response = output['choices'][0]['message']['content']
     print("\n")
     console.print(f"{llm_response[0:6]}[bold green]{llm_response[6::]}[/bold green]")
-def AI_Phishing_Calculation2(body):
+def AI_Phishing_Calculation2(body, from_data):
         
     API_KEY = "sk-cf23a9c220924bea8df33d8322f85595"  
     EMAIL_TEXT = body
     phishing_results = []
-    delete_list = []
+    phishing_indx = []
 
 
     counter = 0
@@ -61,7 +74,7 @@ def AI_Phishing_Calculation2(body):
         response = requests.post(
             "https://api.deepseek.com/v1/chat/completions",
             headers={
-                "Authorization": f"Bearer {API_KEY}",
+                "Authorization": "Bearer " + API_KEY,
                 "Content-Type": "application/json"
             },
             json={
@@ -70,10 +83,9 @@ def AI_Phishing_Calculation2(body):
                     {
                     "role": "user",
                     "content": (
-                        "Determine whether the following email is a phishing email. Be careful not to flag generic advertisement or billing/payments as Scam. Be Careful with Ads/advertisements they are not phishing. Striuclty follow this output 'true/false whehther email is a phishing email. true output looks like True, email is a phishing email because xyz. False output looks like False, email is not a phishing email because of x,y,z  "
+                        "You are an expert Cybersecurity Analyst and Email Security Filter. Your task is to analyze the provided Sender Information and Email Body to detect Phishing, Scams, or Impersonation attempts.  Sender: " + str(from_data[counter] + " Email Body: " + text + " ANALYSIS RULES: 1. Sender Verification (Crucial): Compare the Sender's email address against the entity they claim to be in the body. If the email claims to be from a major company (e.g., Amazon, PayPal, Microsoft) but comes from a generic domain (e.g., @gmail.com) or a misspelled domain (e.g., @paypa1.com), flag it as True (Phishing). 2. Content Patterns: Look for high-pressure tactics, threats of account suspension, urgency, requests for sensitive data/passwords, or \"too good to be true\" offers. 3. False Positive Prevention (Strict): - Advertisements: Do not flag generic marketing, newsletters, or sales announcements as phishing unless they contain malicious impersonation. - Billing/Receipts: Do not flag legitimate automated transaction receipts. Only flag them if the sender address does not match the vendor. OUTPUT FORMAT: You must output the result strictly in the following bracketed format. Do not provide a preamble. - If Phishing/Scam: [True, reason based on sender or content] - If Safe/Ad/Legit: [False, reason why it appears legitimate] EXAMPLES: Input: Sender: support@gmaill.com, Body: \"Your Bank of America account is locked.\" Output: [True, the email claims to be Bank of America but the sender domain is 'gmaill.com' which is a spoofed domain.] Input: Sender: newsletter@marketing.nike.com, Body: \"Check out our summer sale!\" Output: [False, this is a generic advertisement and the sender domain appears legitimate.] Based on the rules above, analyze the Input Data provided."
                         "and explain why in 1 sentence:\n\n"
-                        "Email Body: " + text + "\n\n"
-                        )
+                        ))
                     }
                 ]
             }
@@ -81,18 +93,41 @@ def AI_Phishing_Calculation2(body):
 
         output = response.json()    
         llm_response = output['choices'][0]['message']['content']
-        if llm_response[0:4] == "True":
+        true_or_false = phishing_found(llm_response)
+        if true_or_false == True:
            phishing_results.append(llm_response + "\n\n")
+           phishing_indx.append(counter)
+           counter += 1
         else:
+            counter += 1
             continue
-        counter += 1
-    return(phishing_results)
- 
+    return(phishing_results, phishing_indx)
+
+    
 def delete_email(email_uid):
     mailbox.delete(email_uid)
     mailbox.expunge
+def phishing_found(text):
+    pattern = re.compile(r'True')
+    match = pattern.search(text)
+    if match:
+        return(True)
+    else:
+        return(False)
+def valid_emails(email):
+    pattern = re.compile(r".*@gmail\.com$")  
+    match = pattern.search(email)
+    if match:
+        return(True)
+    else:
+        return(False) 
 
 
+running = True
+console = Console()
+display_logo()
+email_address = Prompt.ask("[bold green]Whats your email? [/bold green]", case_sensitive=False)
+valid = valid_emails(email_address)
 imap_address = "https://www.googleapis.com/auth/userinfo.email https://mail.google.com/"
 
 client_secret = r"C:\Users\Jay\Documents\Python Projects\PhishPy\Files\client_secret.json"
@@ -105,114 +140,167 @@ flow = InstalledAppFlow.from_client_secrets_file(
 )
 creds = flow.run_local_server(port=55555)
 Oauth_refresh_token = (creds.token)
-
 from imap_tools import MailBox, AND, A
 while running == True:
-    console = Console()
-    Run_Program = Prompt.ask("[bold green]Would you like run PhishPY:[/bold green]", choices=["y", "n"], case_sensitive=False)
-    if Run_Program == 'n':
-        break
-    elif Run_Program == 'y':
-        option_choice = Prompt.ask("[bold green]Press[/bold green] [magenta](1)[/magenta] [bold green]to activate single scan or Press[/bold green] [magenta](2)[/magenta] [bold green]to activate Bulk Scan?:[/bold green]", choices=["1", "2"], case_sensitive=False)
-        if option_choice == '1':
-            Email_Found = False
-            user_search = Prompt.ask("[green]Search:[/green] ")
-            with MailBox('imap.gmail.com').xoauth2('jahzeelbishop03@gmail.com', Oauth_refresh_token, 'INBOX') as mailbox:
-                search_count = 0
-                email_uid = []
-                console.print("[bold green]Searching...[/bold green]")
-                for msg in mailbox.fetch(AND(subject=user_search)):
-                    Email_Found = True
+    if valid == True:
+        Run_Program = Prompt.ask("[bold green]Would you like run PhishPY:[/bold green]", choices=["y", "n"], case_sensitive=False)
+        if Run_Program == 'n':
+            break
+        elif Run_Program == 'y':
+            option_choice = Prompt.ask("[bold green]Press[/bold green] [magenta](1)[/magenta] [bold green]to activate single scan Press[/bold green] [magenta](2)[/magenta] [bold green]to activate Bulk Scan[/bold green] [bold green]Press[/bold green] [magenta](3)[/magenta] [bold green]to activate Auto Scan Press[/bold green] ", choices=["1", "2", "3"], case_sensitive=False)
+            if option_choice == '1':
+                Email_Found = False
+                user_search = Prompt.ask("[green]Search:[/green] ")
+                with MailBox('imap.gmail.com').xoauth2(email_address, Oauth_refresh_token, 'INBOX') as mailbox:
+                    search_count = 0
+                    email_uid = []
+                    console.print("[bold green]Searching...[/bold green]")
+                    for msg in mailbox.fetch(AND(subject=user_search)):
+                        Email_Found = True
+                        search_results = Table(title="[bold][yellow]Scan Results[/bold][/yellow]", border_style="green", header_style="magenta")
+                        search_results.add_column("Subject", style="bold grey70")
+                        search_results.add_column("From", style="bold grey70")
+                        search_results.add_column("Date", style="bold grey70")
+                        search_results.add_row(msg.subject, msg. from_, str(msg.date))
+                        console.print(search_results)  
+                        confirm = Prompt.ask("[bold green]Is this the correct email?[/bold green]", choices=["y", "n"], case_sensitive=False)
+                        if confirm == 'y':
+                            body = msg.text
+                            sender = msg.from_
+                            header = msg.headers
+                            with console.status("[bold green]Determining whether Phishing Email[/bold green]", spinner="dots"):
+                                sleep(3)
+                                AI_Phishing_Calculation(body, sender, header)
+                            delete = Prompt.ask("[bold green]Would you like to delete email?[bold green]", choices=["y", "n"], case_sensitive=False)
+                            if delete == 'n':
+                                continue      
+                            if delete == 'y':
+                                email_uid.append(msg.uid)
+                                delete_email(email_uid)
+                                console.print("[bold red] Deleted [/bold red]")
+                                break
+                        elif search_count == 5:
+                            search_again = Prompt.ask("Would you like to search again?", choices=["y", "n"], case_sensitive=False)
+                            if search_again == 'n':
+                                continue
+                            if search_again == 'y':
+                                break  
+                            
+                        elif confirm == 'n':
+                            print("[bold magenta]Skipping this email[bold magenta]")
+                            search_count += 1
+                            continue
+                    if Email_Found == False:
+                        print("[red]Search Not Found[/red]")
+                        search_again = Prompt.ask("Would you like to search again?", choices=["y", "n"], case_sensitive=False)
+                        if search_again == 'n':
+                            break  
+                        if search_again == 'y':
+                            continue      
+            elif option_choice == '2':
+                counter = 0
+                with MailBox('imap.gmail.com').xoauth2(email_address, Oauth_refresh_token, 'INBOX') as mailbox:
+                    email_text_list = {}
+                    email_uid = []
+                    msg_data = []
+                    from_data = []
+                    date_data = []
                     search_results = Table(title="[bold][yellow]Scan Results[/bold][/yellow]", border_style="green", header_style="magenta")
                     search_results.add_column("Subject", style="bold grey70")
                     search_results.add_column("From", style="bold grey70")
                     search_results.add_column("Date", style="bold grey70")
-                    search_results.add_row(msg.subject, msg. from_, str(msg.date))
-                    console.print(search_results)  
-                    confirm = Prompt.ask("[bold green]Is this the correct email?[/bold green]", choices=["y", "n"], case_sensitive=False)
-                    if confirm == 'y':
-                        body = msg.text
-                        sender = msg.from_
-                        header = msg.headers
-                        with console.status("[bold green]Determining whether Phishing Email[/bold green]", spinner="dots"):
-                            sleep(3)
-                            AI_Phishing_Calculation(body, sender, header)
-                        delete = Prompt.ask("[bold green]Would you like to delete email?[bold green]", choices=["y", "n"], case_sensitive=False)
+                    search_results.add_column("Phishing", style="bold grey70")
+                    search_results.add_column("Number", style="bold grey70")
+                    for msg in mailbox.fetch(reverse=True, limit=10):
+                        Email_Found = True
+                        msg_data.append(msg.subject)
+                        from_data.append(msg.from_)
+                        date_data.append(str(msg.date))
+                        email_text_list[msg.subject] = (msg.text)
+                        email_uid.append(msg.uid) 
+                        counter += 1
+                    subject_list = list(email_text_list.keys())
+                    email_text_list = list(email_text_list.values())
+                    with console.status("[bold green]Analyzing Emails[/bold green]", spinner="dots"):
+                        sleep(3)
+                        results, phishing_index = AI_Phishing_Calculation2(email_text_list,from_data)
+                    if len(results) == 0:
+                        console.print("[bold red] No Phishing Emails Found [/bold red]")
+                    else:
+                        for message in range(len(results)):
+                            position = phishing_index[message]
+                            search_results.add_row(msg_data[position], from_data[position], date_data[position], results[message], str(position))
+                        console.print(search_results) 
+                        delete = Prompt.ask("Would you like to delete any emails: y/n", choices=["y", "n"], case_sensitive=False)
                         if delete == 'n':
-                            continue      
-                        if delete == 'y':
-                            email_uid.append(msg.uid)
-                            delete_email(email_uid)
-                            console.print("[bold red] Deleted [/bold red]")
-                            break
-                    elif search_count == 5:
-                        search_again = Prompt.ask("Would you like to search again?", choices=["y", "n"], case_sensitive=False)
-                        if search_again == 'n':
                             continue
-                        if search_again == 'y':
-                            break  
-                        
-                    elif confirm == 'n':
-                        print("[bold magenta]Skipping this email[bold magenta]")
-                        search_count += 1
-                        continue
-                if Email_Found == False:
-                    print("[red]Search Not Found[/red]")
-                    search_again = Prompt.ask("Would you like to search again?", choices=["y", "n"], case_sensitive=False)
-                    if search_again == 'n':
-                        break  
-                    if search_again == 'y':
-                        continue      
-        elif option_choice == '2':
-            counter = 0
-            with MailBox('imap.gmail.com').xoauth2('jahzeelbishop03@gmail.com', Oauth_refresh_token, 'INBOX') as mailbox:
-                email_text_list = {}
-                email_uid = []
-                msg_data = []
-                from_data = []
-                date_data = []
-                search_results = Table(title="[bold][yellow]Scan Results[/bold][/yellow]", border_style="green", header_style="magenta")
-                search_results.add_column("Subject", style="bold grey70")
-                search_results.add_column("From", style="bold grey70")
-                search_results.add_column("Date", style="bold grey70")
-                search_results.add_column("Phishing", style="bold grey70")
-                search_results.add_column("Number", style="bold grey70")
-                for msg in mailbox.fetch(reverse=True, limit=10):
-                    Email_Found = True
-                    msg_data.append(msg.subject)
-                    from_data.append(msg.from_)
-                    date_data.append(str(msg.date))
-                    email_text_list[msg.subject] = (msg.text)
-                    email_uid.append(msg.uid) 
-                    counter += 1
-                subject_list = list(email_text_list.keys())
-                email_text_list = list(email_text_list.values())
-                with console.status("[bold green]Analyzing Emails[/bold green]", spinner="dots"):
-                    sleep(3)
-                    results = AI_Phishing_Calculation2(email_text_list)
-                if len(results) == 0:
-                    console.print("[bold red] No Phishing Emails Found [/bold red]")
-                else:
-                    for message in range(len(results)):
-                        search_results.add_row(msg_data[message], from_data[message], date_data[message], results[message], str(message))
-                    console.print(search_results) 
-                    delete = Prompt.ask("Would you like to delete any emails: y/n", choices=["y", "n"], case_sensitive=False)
-                    if delete == 'n':
-                        continue
-                    elif delete == 'y':
-                            selection = Prompt.ask("which email 1-10", choices=["1", "2", "3", "4", "5", "6 ", "7", "8", "9", "10", "all"], case_sensitive=False)
-                            for i in range(len(email_uid)):
-                                if selection == "i":
-                                    delete_email(email_uid[i])
-                                    console.print("[bold red] Deleted [/bold red]")
-                                elif  selection == "all":
-                                    for em in range(0,10):
+                        elif delete == 'y':
+                                selection = Prompt.ask("which email 1-10", choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "all"], case_sensitive=False)
+                                with console.status("[bold green]Auto Scan Running[/bold green]", spinner="dots"):
+                                    sleep(3)
+                                    for i in range(len(email_uid)):
+                                        if selection == "i":
+                                            delete_email(email_uid[i])
+                                            console.print("[bold red] Deleted [/bold red]")
+                                        elif  selection == "all":
+                                            for em in range(0,10):
+                                                try:
+                                                    delete_email(email_uid[em])
+                                                except:
+                                                    continue
+                                            console.print("[bold red] Deleted [/bold red]")
+            elif option_choice == '3':
+                console.print("[bold yellow]AUTO-SCAN MODE DISCLAIMER [/bold yellow]")
+                console.print("[bold yellow]False positives may result in legitimate emails being deleted AI detection is not 100 Percent accurate[/bold yellow]")
+                continue_autoscan = Prompt.ask("[bold red]Would you like to continue? [/bold red]", choices=["y", "n"], case_sensitive=False)
+                if continue_autoscan == "y":
+                    autoscan_enabled = True
+                    while autoscan_enabled == True:
+                        counter = 0
+                        with console.status("[bold green]Auto Scan Running[/bold green]", spinner="dots"):
+                            sleep(3)
+                            with MailBox('imap.gmail.com').xoauth2(email_address, Oauth_refresh_token, 'INBOX') as mailbox:
+                                email_text_list = {}
+                                email_uid = []
+                                msg_data = []
+                                from_data = []
+                                date_data = []
+                                for msg in mailbox.fetch(reverse=True, limit=10):
+                                    Email_Found = True
+                                    msg_data.append(msg.subject)
+                                    from_data.append(msg.from_)
+                                    date_data.append(str(msg.date))
+                                    email_text_list[msg.subject] = (msg.text)
+                                    email_uid.append(msg.uid) 
+                                    counter += 1
+                                subject_list = list(email_text_list.keys())
+                                email_text_list = list(email_text_list.values())
+                                results, phishing_index = AI_Phishing_Calculation2(email_text_list,from_data)
+                                if len(results) == 0:
+                                    console.print("[bold red] No Phishing Emails Found [/bold red]")
+                                else:
+                                    console.print("[bold red] Phishing Emails Found [/bold red]")
+                                    for message in range(len(results)):
+                                        position = phishing_index[message]
                                         try:
-                                            delete_email(email_uid[em])
+                                            delete_email(email_uid[position])
+                                            file = open(r"C:\Users\Jay\Documents\Python Projects\PhishPy\Autoscan_Output.txt", 'a')
+                                            file.write("Deleted: " + msg_data[position] + " From: " + str(from_data[position]) + " Date " + str(date_data[position]) + "\n")
+                                            file.close()
+                                            console.print("[bold red] Deleted Emails [/bold red]")
                                         except:
-                                            continue
-                            console.print("[bold red] Deleted All[/bold red]")
-
+                                            file = open(r"C:\Users\Jay\Documents\Python Projects\PhishPy\Autoscan_Output.txt", 'a')
+                                            file.write("Error Occured")
+                                            file.close()
+                                            console.print("[bold red] Error Occured[/bold red]")
+                                            break
+                        sleep(10)
+                elif continue_autoscan == "n":
+                    continue
+    else:
+        console.print("[bold red]EMAIL TYPE NOT COMPATIBLE [/bold red]")
+        email_address = Prompt.ask("[bold green]Whats your email? [/bold green]", case_sensitive=False)
+        valid = valid_emails(email_address)
 
 
 
