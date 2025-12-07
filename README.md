@@ -14,7 +14,7 @@ Features:
 
 
 
-The tool uses AI to feed the email data such as text, sender, and emails to Deepseek LLM for analyzes adn then outputs it to the user for the option to the email(s) or not.
+The tool will feed AI the email data such as text, sender, and emails to Deepseek LLM for analyzes and then outputs it to the user for the option to the email(s) or not.
 
 
 Requirements
