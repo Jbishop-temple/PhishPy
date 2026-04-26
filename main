@@ -62,7 +62,7 @@ def AI_Phishing_Calculation(body, sender, header):
     console.print(f"{llm_response[0:6]}[bold green]{llm_response[6::]}[/bold green]")
 def AI_Phishing_Calculation2(body, from_data):
         
-    API_KEY = "sk-cf23a9c220924bea8df33d8322f85595"  
+    API_KEY =  
     EMAIL_TEXT = body
     phishing_results = []
     phishing_indx = []
